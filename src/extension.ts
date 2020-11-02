@@ -48,6 +48,18 @@ const testFilePath = (filePath: string, config: AutoSaveConfig) => {
   return true
 }
 
+type EventTypes = {
+  fileChanged: vscode.TextDocument
+  fileSaved: vscode.TextDocument
+  configChanged: AutoSaveConfig | null
+}
+
+const eventTypes: { [K in keyof EventTypes]: string } = {
+  fileChanged: 'fileChanged',
+  fileSaved: 'fileSaved',
+  configChanged: 'configChanged',
+}
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 // https://code.visualstudio.com/api/references/activation-events
@@ -59,13 +71,20 @@ export function activate(context: vscode.ExtensionContext) {
   }
 
   const wsEmitter = new EventEmitter()
+  const emitEvent = <T extends keyof EventTypes>(
+    type: T,
+    data: EventTypes[T]
+  ) => {
+    wsEmitter.emit(type, data)
+  }
 
-  const docChanged$ = fromEvent<vscode.TextDocument>(
-    wsEmitter,
-    'didChangeTextDocument'
-  )
+  const getEvents = <T extends keyof EventTypes>(type: T) => {
+    return fromEvent<EventTypes[T]>(wsEmitter, type)
+  }
 
-  const config$ = fromEvent<AutoSaveConfig | null>(wsEmitter, 'configChanged')
+  const config$ = getEvents('configChanged')
+  const docChanged$ = getEvents('fileChanged')
+  const docSaved$ = getEvents('fileSaved')
 
   config$
     .debug((config) => {
@@ -81,10 +100,7 @@ export function activate(context: vscode.ExtensionContext) {
     .map((config) => {
       if (!config) return xs.empty()
 
-      const docSaved$ = fromEvent<vscode.TextDocument>(
-        wsEmitter,
-        'didSaveTextDocument'
-      )
+      docSaved$
         .filter((doc) => testFilePath(doc.uri.fsPath, config))
         .map((d) => {
           return xs.merge(xs.of(d), xs.of(null).compose(delay(500)))
@@ -109,16 +125,15 @@ export function activate(context: vscode.ExtensionContext) {
     .addListener({
       next: (d) => {
         log('Saving changed file:', d.uri.fsPath)
-
         d.save()
       },
     })
 
   vscode.workspace.onDidSaveTextDocument((document) => {
-    wsEmitter.emit('didSaveTextDocument', document)
+    emitEvent('fileSaved', document)
   })
   vscode.workspace.onDidChangeTextDocument(({ document }) => {
-    wsEmitter.emit('didChangeTextDocument', document)
+    emitEvent('fileChanged', document)
   })
 
   const getConfig = () => {
@@ -129,7 +144,7 @@ export function activate(context: vscode.ExtensionContext) {
     const configVal: AutoSaveConfig | null = settingConfig
       ? decodeConfig(settingConfig)
       : null
-    wsEmitter.emit('configChanged', configVal)
+    emitEvent('configChanged', configVal)
   }
 
   const disposable = vscode.commands.registerCommand(
