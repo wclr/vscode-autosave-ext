@@ -2,27 +2,31 @@
 // Import the module and reference it with the alias vscode in your code below
 import vscode from 'vscode'
 import { extname } from 'path'
-import xs from 'xstream'
+import xs, { Stream } from 'xstream'
 import fromEvent from 'xstream/extra/fromEvent'
-import debounce from 'xstream/extra/debounce'
 import delay from 'xstream/extra/delay'
 import sampleCombine from 'xstream/extra/sampleCombine'
+import { debounceBy } from './debounce'
 
 import { EventEmitter } from 'events'
 
 type AutoSaveConfig = {
-  extensions: string[]
-  include: string[]
-  exclude: string[]
   debounce: number
+  extensions: string[]
+  // include: string[]  // not implemented
+  // exclude: string[]  // not implemented
+  // glob: boolean
 }
 
 const defaultConfig: AutoSaveConfig = {
   debounce: 500,
   extensions: [],
-  include: [], // not implemented
-  exclude: [], // not implemented
+  // include: [],
+  // exclude: [],
+  // glob: false
 }
+
+const outputChannelName = 'AutoSaveExt'
 
 const decodeConfig = (val: Partial<AutoSaveConfig>): AutoSaveConfig => {
   return {
@@ -31,8 +35,8 @@ const decodeConfig = (val: Partial<AutoSaveConfig>): AutoSaveConfig => {
         ? val.debounce
         : defaultConfig.debounce,
     extensions: (val.extensions || []).map((val) => '.' + val.replace('.', '')),
-    include: val.include || [],
-    exclude: val.exclude || [],
+    // include: val.include || [],
+    // exclude: val.exclude || [],
   }
 }
 
@@ -47,8 +51,9 @@ const testFilePath = (filePath: string, config: AutoSaveConfig) => {
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 // https://code.visualstudio.com/api/references/activation-events
+// AutoSaveExt extension is activated onStartupFinished
 export function activate(context: vscode.ExtensionContext) {
-  const output = vscode.window.createOutputChannel('Autosave Ext')
+  const output = vscode.window.createOutputChannel(outputChannelName)
   const log = (...args: string[]) => {
     output.appendLine(args.join(' '))
   }
@@ -90,15 +95,21 @@ export function activate(context: vscode.ExtensionContext) {
 
       return docChanged$
         .filter((doc) => testFilePath(doc.uri.fsPath, config))
-        .compose(debounce(config.debounce))
+        .compose(debounceBy((_) => _, config.debounce))
+        .debug((d) => log('changed after debounce', d.uri.fsPath))
         .compose(sampleCombine(docSaved$))
+        .debug(([d1, d2]) =>
+          log('changed', d1.uri.fsPath, 'last saved', d2?.uri.fsPath || 'null')
+        )
         .filter(([d, lastSaved]) => d.uri.fsPath !== lastSaved?.uri.fsPath)
         .map(([d]) => d)
+        .debug((d) => log('changed pass', d.uri.fsPath))
     })
     .flatten()
     .addListener({
       next: (d) => {
         log('Saving changed file:', d.uri.fsPath)
+
         d.save()
       },
     })
