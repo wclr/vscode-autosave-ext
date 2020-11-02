@@ -54,12 +54,6 @@ type EventTypes = {
   configChanged: AutoSaveConfig | null
 }
 
-const eventTypes: { [K in keyof EventTypes]: string } = {
-  fileChanged: 'fileChanged',
-  fileSaved: 'fileSaved',
-  configChanged: 'configChanged',
-}
-
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 // https://code.visualstudio.com/api/references/activation-events
@@ -84,7 +78,6 @@ export function activate(context: vscode.ExtensionContext) {
 
   const config$ = getEvents('configChanged')
   const docChanged$ = getEvents('fileChanged')
-  const docSaved$ = getEvents('fileSaved')
 
   config$
     .debug((config) => {
@@ -100,7 +93,7 @@ export function activate(context: vscode.ExtensionContext) {
     .map((config) => {
       if (!config) return xs.empty()
 
-      docSaved$
+    const docSaved$ = getEvents('fileSaved')
         .filter((doc) => testFilePath(doc.uri.fsPath, config))
         .map((d) => {
           return xs.merge(xs.of(d), xs.of(null).compose(delay(500)))
