@@ -1,40 +1,30 @@
-# vscode-auto-import-tune README
+# AutoSaveExt VSCode Extension
 
-This is the README for your extension "vscode-auto-import-tune". After writing up a brief description, we recommend including the following sections.
+> VSCode extension for advanced autosave feature configuration.
 
-## Features
+This extension allows to have custom configuration of autosave feature for specified types of files because standard editor's `autoSave` option is applied to all file types and languages.
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## Settings
 
-For example if there is an image subfolder under your extension project workspace:
+Extension loads config from standard settings (project's `.vscode/settings.json` or .global user settings). 
 
-\!\[feature X\]\(images/feature-x.png\)
+This option is not language specific, so just add file extensions that should be a subject for autosave.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+Supported config:
 
-## Requirements
+```json
+{
+  "autoSaveExt": {
+    "debounce": 1000, // default is 500
+    "extensions": [".elm", ".ts"] // if no extension set will be applied to all files
+  }
+}
+```
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## Issues
 
-## Extension Settings
+If you have proposal or issue. Add an issue with description of your case.
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+### Unreleased
 
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
+Initial release of unreleased yet.
