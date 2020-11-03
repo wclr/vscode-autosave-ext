@@ -14,7 +14,7 @@ describe('runAutoSaveExt', () => {
   const lastSavedDoc = () => savedDocs[savedDocs.length - 1]
   const cleanSaved = () => savedDocs.splice(0, savedDocs.length)
 
-  const getVscodeDoc = ({
+  const getTextDoc = ({
     path,
     saveTimeout = 0,
   }: {
@@ -43,8 +43,11 @@ describe('runAutoSaveExt', () => {
       },
     })
   })
+  beforeEach(() => {
+    cleanSaved()
+  })
 
-  it('should enabled message if config is present', async () => {
+  it('should show enabled message if config is present', async () => {
     emitEvent('configChanged', {
       debounce: 100,
       extensions: ['.elm'],
@@ -58,9 +61,10 @@ describe('runAutoSaveExt', () => {
       extensions: ['.elm'],
     })
 
-    const d = getVscodeDoc({ path: '/some/path/file.elm' })
+    const d = getTextDoc({ path: '/some/path/file.elm' })
     emitEvent('fileChanged', d)
-    await timeout(500)
+    await timeout(200)
+
     t.ok(/file saved/i.test(lastLogMessage()))
     t.ok(lastSavedDoc() === d)
   })
@@ -71,7 +75,7 @@ describe('runAutoSaveExt', () => {
       extensions: ['.elm'],
     })
 
-    const d = getVscodeDoc({ path: '/some/path/file.js' })
+    const d = getTextDoc({ path: '/some/path/file.js' })
     emitEvent('fileChanged', d)
     await timeout(150)
 
@@ -84,9 +88,7 @@ describe('runAutoSaveExt', () => {
       extensions: ['.elm'],
     })
 
-    const d = getVscodeDoc({ path: '/some/path/file.elm' })
-
-    cleanSaved()
+    const d = getTextDoc({ path: '/some/path/file.elm' })
 
     emitEvent('fileChanged', d)
     await timeout(10)
@@ -104,10 +106,8 @@ describe('runAutoSaveExt', () => {
       extensions: ['.elm'],
     })
 
-    const d1 = getVscodeDoc({ path: '/some/path/file1.elm' })
-    const d2 = getVscodeDoc({ path: '/some/path/file2.elm' })
-
-    cleanSaved()
+    const d1 = getTextDoc({ path: '/some/path/file1.elm' })
+    const d2 = getTextDoc({ path: '/some/path/file2.elm' })
 
     emitEvent('fileChanged', d1)
     await timeout(10)
@@ -126,18 +126,15 @@ describe('runAutoSaveExt', () => {
       extensions: ['.elm'],
     })
 
-    const d = getVscodeDoc({ path: '/some/path/file.elm' })
-
-    cleanSaved()
+    const d = getTextDoc({ path: '/some/path/file.elm' })
 
     emitEvent('fileChanged', d)
     await timeout(100)
-    emitEvent('fileChanged', d)    
+    emitEvent('fileChanged', d)
     await timeout(100)
-    
+
     t.strictEqual(savedDocs.length, 1)
   })
-
 
   it('should output not enabled message if no config', () => {
     emitEvent('configChanged', null)
