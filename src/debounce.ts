@@ -1,6 +1,10 @@
 import xs, { Stream } from 'xstream'
 import delay from 'xstream/extra/delay'
 
+/* 
+Helper stream operator function that applies delay based debounce
+to stream parts splitting it by supplied predicate rule.
+ */
 export const debounceBy = <T, B = any>(
   by: (val: T) => B,
   debounceDelay: number

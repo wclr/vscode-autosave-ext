@@ -12,7 +12,7 @@ This option is not language specific, so just add file extensions that should be
 
 Supported config:
 
-```json
+```json5
 {
   "autoSaveExt": {
     "debounce": 1000, // default is 500
