@@ -9,8 +9,8 @@ import { makeEmitter } from './emitter'
 const defaultConfig: AutoSaveConfig = {
   debounce: 500,
   extensions: [],
-  // include: [],
-  // exclude: [],
+  include: [],
+  exclude: [],
   // glob: false
 }
 
@@ -23,8 +23,8 @@ const decodeConfig = (val: Partial<AutoSaveConfig>): AutoSaveConfig => {
         ? val.debounce
         : defaultConfig.debounce,
     extensions: (val.extensions || []).map((val) => '.' + val.replace('.', '')),
-    // include: val.include || [],
-    // exclude: val.exclude || [],
+    include: val.include || [],
+    exclude: val.exclude || [],
   }
 }
 
@@ -75,4 +75,4 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }

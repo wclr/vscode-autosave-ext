@@ -8,6 +8,8 @@ This extension allows to have custom configuration of autosave feature for speci
 
 Extension loads config from standard settings (project's `.vscode/settings.json` or .global user settings). 
 
+Case you do not define a configuration, autosave will be applied to all files
+
 This option is not language specific, so just add file extensions that should be a subject for autosave.
 
 Supported config:
@@ -16,7 +18,19 @@ Supported config:
 {
   "autoSaveExt": {
     "debounce": 1000, // default is 500
-    "extensions": [".elm", ".ts"] // if no extension set will be applied to all files
+    "extensions": [".elm", ".ts"]
+  }
+}
+```
+
+You also he can specify a subject for autosave with include and exclude using glob patterns
+
+```json5
+{
+  "autoSaveExt": {
+    "extensions": [".ts"],
+    "include": ["*.test.jsx", "*.config*"],
+    "exclude": ["*.component.ts", "*.service.ts"],
   }
 }
 ```

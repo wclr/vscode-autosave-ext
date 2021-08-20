@@ -141,4 +141,89 @@ describe('runAutoSaveExt', () => {
     t.ok(/not enabled/.test(lastLogMessage()))
     emitEvent('configChanged', null)
   })
+
+  it('should save changed file using config include', async () => {
+    emitEvent('configChanged', {
+      debounce: 100,
+      extensions: ['.js'],
+      include: ['*.spec.elm'],
+    })
+
+    const d = getTextDoc({ path: '/some/path/file.spec.elm' })
+    emitEvent('fileChanged', d)
+    await timeout(200)
+
+    t.ok(/file saved/i.test(lastLogMessage()))
+    t.ok(lastSavedDoc() === d)
+  })
+
+  it('should skip change of file that has not correct pattern', async () => {
+    emitEvent('configChanged', {
+      debounce: 50,
+      include: ['*.spec.elm'],
+    })
+
+    const d = getTextDoc({ path: '/some/path/file.test.elm' })
+    emitEvent('fileChanged', d)
+    await timeout(150)
+
+    t.ok(lastSavedDoc() !== d)
+  })
+
+  it('should skip change of file that has correct extension, but has match on exclude config', async () => {
+    emitEvent('configChanged', {
+      debounce: 50,
+      extensions: ['.elm'],
+      exclude: ['*.test.elm'],
+    })
+
+    const d = getTextDoc({ path: '/some/path/file.test.elm' })
+    emitEvent('fileChanged', d)
+    await timeout(150)
+
+    t.ok(lastSavedDoc() !== d)
+  })
+
+  it('should save changed file that has correct extension when config exclude is enabled but does has not matchs', async () => {
+    emitEvent('configChanged', {
+      debounce: 50,
+      extensions: ['.elm'],
+      exclude: ['*.test.elm'],
+    })
+
+    const d = getTextDoc({ path: '/some/path/file.elm' })
+    emitEvent('fileChanged', d)
+    await timeout(150)
+
+    t.ok(lastSavedDoc() === d)
+  })
+
+  it('should skip change of file that has correct pattern, but has match on exclude config', async () => {
+    emitEvent('configChanged', {
+      debounce: 50,
+      include: ['*.elm'],
+      exclude: ['*.test.elm'],
+    })
+
+    const d = getTextDoc({ path: '/some/path/file.test.elm' })
+    emitEvent('fileChanged', d)
+    await timeout(150)
+
+    t.ok(lastSavedDoc() !== d)
+  })
+
+  it('should save changed file using config include when config exclude is enabled but does has not match (glob)', async () => {
+    emitEvent('configChanged', {
+      debounce: 50,
+      extensions: ['.js'],
+      include: ['*.elm'],
+      exclude: ['*.test.elm'],
+    })
+
+    const d = getTextDoc({ path: '/some/path/file.spec.elm' })
+    emitEvent('fileChanged', d)
+    await timeout(150)
+
+    t.ok(lastSavedDoc() === d)
+  })
 })

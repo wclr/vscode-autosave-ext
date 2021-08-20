@@ -1,16 +1,39 @@
 import xs from 'xstream'
-import { extname } from 'path'
+import { basename, extname } from 'path'
 import delay from 'xstream/extra/delay'
 import sampleCombine from 'xstream/extra/sampleCombine'
 import { debounceBy } from './debounce'
 import { AutoSaveConfig, GetEvents, Log } from './types'
+import globToRegExp from 'glob-to-regexp';
+
+const testGlob = (config: string[], fileName: string) => {
+  let patternFound = false;
+  for (var i = 0; i < config.length; i++) {
+    if (globToRegExp(config[i]).test(fileName)) {
+      patternFound = true;
+      break;
+    }
+  }
+  return patternFound;
+}
 
 const testFilePath = (filePath: string, config: AutoSaveConfig) => {
-  if (config.extensions.length) {
-    const ext = extname(filePath)
-    return config.extensions.includes(ext)
-  }
-  return true
+  const fileExt = extname(filePath);
+  const fileName = basename(filePath);
+  let saveFile;
+
+  if (config?.extensions?.length && !config?.include?.length)
+    saveFile = config?.extensions.includes(fileExt)
+
+  if (config?.include?.length)
+    saveFile = testGlob(config.include, fileName)
+
+  if (config?.exclude?.length && testGlob(config.exclude, fileName))
+    saveFile = false
+
+  if (saveFile === undefined) return true;
+
+  return saveFile;
 }
 
 export const runAutoSaveExt = ({

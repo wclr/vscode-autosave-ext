@@ -3,9 +3,9 @@ import { Stream } from 'xstream'
 
 export type AutoSaveConfig = {
   debounce: number
-  extensions: string[]
-  // include: string[]  // not implemented
-  // exclude: string[]  // not implemented
+  extensions?: string[]
+  include?: string[]
+  exclude?: string[]
   // glob: boolean
 }
 
